@@ -7,6 +7,21 @@ import { StatsOverview } from '@/components/admin/StatsOverview'
 import { UsersTable } from '@/components/admin/UsersTable'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+import type { Database } from '@/types/database'
+
+interface UserProfile {
+  id: string
+  user_id: string
+  email: string
+  role: string
+  created_at: string
+  last_sign_in: string | null
+  subscription_status?: string
+}
+
+type ProfileWithSubscription = Database['public']['Tables']['profiles']['Row'] & {
+  subscriptions: Array<{ status: string }> | null
+}
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({
@@ -14,7 +29,7 @@ export default function AdminDashboard() {
     activeUsers: 0,
     premiumUsers: 0
   })
-  const [users, setUsers] = useState([])
+  const [users, setUsers] = useState<UserProfile[]>([])
   const [loading, setLoading] = useState(true)
 
   const fetchData = async () => {
@@ -45,14 +60,35 @@ export default function AdminDashboard() {
       premiumUsers: premiumUsers || 0
     })
 
-    // Fetch users
-    const { data: userData } = await supabase
+    // Fetch profiles with subscriptions
+    const { data: profileData } = await supabase
       .from('profiles')
-      .select('*')
+      .select(`
+        *,
+        subscriptions (
+          status
+        )
+      `)
       .order('created_at', { ascending: false })
 
-    if (userData) {
-      setUsers(userData)
+    if (profileData) {
+      // Get user emails from auth.users using admin API
+      const { data: { users: authUsers } } = await supabase.auth.admin.listUsers()
+      
+      // Create email lookup map
+      const emailMap = new Map(authUsers?.map(user => [user.id, user.email]) || [])
+
+      const formattedUsers: UserProfile[] = (profileData as ProfileWithSubscription[]).map(profile => ({
+        id: profile.id,
+        user_id: profile.user_id,
+        email: emailMap.get(profile.user_id) || 'N/A',
+        role: profile.role,
+        created_at: profile.created_at,
+        last_sign_in: profile.last_sign_in,
+        subscription_status: profile.subscriptions?.[0]?.status
+      }))
+      
+      setUsers(formattedUsers)
     }
 
     setLoading(false)

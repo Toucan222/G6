@@ -7,6 +7,7 @@ import { PricingCard } from '@/components/PricingCard'
 import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { notifications } from '@mantine/notifications'
 
 const PRICING_PLANS = [
   {
@@ -22,7 +23,7 @@ const PRICING_PLANS = [
   {
     title: 'Pro',
     price: '$9.99/month',
-    priceId: 'price_XXXXX', // Replace with actual Stripe price ID
+    priceId: process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID,
     features: [
       'Unlimited decks',
       'Unlimited cards',
@@ -53,9 +54,10 @@ export default function Pricing() {
   const canceled = searchParams.get('canceled')
 
   const handleSubscribe = async (priceId: string) => {
-    setLoading(true)
     try {
+      setLoading(true)
       const { data: { user } } = await supabase.auth.getUser()
+      
       if (!user) {
         router.push('/auth/login')
         return
@@ -67,14 +69,25 @@ export default function Pricing() {
         body: JSON.stringify({ priceId, userId: user.id })
       })
 
-      const { url } = await response.json()
-      if (url) {
-        window.location.href = url
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create checkout session')
+      }
+
+      if (data.url) {
+        window.location.href = data.url
       }
     } catch (error) {
       console.error('Subscription error:', error)
+      notifications.show({
+        title: 'Error',
+        message: 'Failed to start subscription process. Please try again.',
+        color: 'red'
+      })
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   return (

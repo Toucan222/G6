@@ -1,4 +1,3 @@
-// Update existing middleware to include admin check
 import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
@@ -11,7 +10,8 @@ export async function middleware(req: NextRequest) {
   // Protected routes check
   if (!session && (
     req.nextUrl.pathname.startsWith('/dashboard') || 
-    req.nextUrl.pathname.startsWith('/admin')
+    req.nextUrl.pathname.startsWith('/admin') ||
+    req.nextUrl.pathname.startsWith('/api/create-checkout')
   )) {
     return NextResponse.redirect(new URL('/auth/login', req.url))
   }
@@ -33,5 +33,10 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/admin/:path*', '/profile/:path*']
+  matcher: [
+    '/dashboard/:path*',
+    '/admin/:path*',
+    '/profile/:path*',
+    '/api/create-checkout'
+  ]
 }

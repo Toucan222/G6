@@ -5,16 +5,18 @@ import { IconDots, IconBan, IconCrown } from '@tabler/icons-react'
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 
-interface User {
+interface UserProfile {
   id: string
+  user_id: string
   email: string
   role: string
   created_at: string
   last_sign_in: string | null
+  subscription_status?: string
 }
 
 interface UsersTableProps {
-  users: User[]
+  users: UserProfile[]
   onUpdate: () => void
 }
 
@@ -37,6 +39,7 @@ export function UsersTable({ users, onUpdate }: UsersTableProps) {
         <Table.Tr>
           <Table.Th>Email</Table.Th>
           <Table.Th>Role</Table.Th>
+          <Table.Th>Status</Table.Th>
           <Table.Th>Joined</Table.Th>
           <Table.Th>Last Active</Table.Th>
           <Table.Th>Actions</Table.Th>
@@ -49,6 +52,13 @@ export function UsersTable({ users, onUpdate }: UsersTableProps) {
             <Table.Td>
               <Badge color={user.role === 'admin' ? 'blue' : 'gray'}>
                 {user.role}
+              </Badge>
+            </Table.Td>
+            <Table.Td>
+              <Badge
+                color={user.subscription_status === 'active' ? 'green' : 'gray'}
+              >
+                {user.subscription_status || 'free'}
               </Badge>
             </Table.Td>
             <Table.Td>
