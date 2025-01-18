@@ -59,6 +59,11 @@ export default function Pricing() {
       const { data: { user } } = await supabase.auth.getUser()
       
       if (!user) {
+        notifications.show({
+          title: 'Authentication Required',
+          message: 'Please log in to subscribe.',
+          color: 'blue'
+        })
         router.push('/auth/login')
         return
       }
@@ -82,7 +87,7 @@ export default function Pricing() {
       console.error('Subscription error:', error)
       notifications.show({
         title: 'Error',
-        message: 'Failed to start subscription process. Please try again.',
+        message: error instanceof Error ? error.message : 'Failed to start subscription process',
         color: 'red'
       })
     } finally {
