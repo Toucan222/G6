@@ -1,0 +1,2 @@
+title,image_url,quick_facts,scoreboard,text_block,link_block,audio_block
+"Example Card","https://example.com/image.jpg","Fact 1|Fact 2|Fact 3","{""speed"":90,""power"":85}","Description text","https://example.com","https://example.com/audio.mp3"
